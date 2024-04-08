@@ -1,4 +1,8 @@
 
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using MultiTenantJwtBearer.Contracts;
+using MultiTenantJwtBearer.MultiTenancy;
+
 namespace MultiTenantJwtBearer
 {
     public class Program
@@ -6,30 +10,51 @@ namespace MultiTenantJwtBearer
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
+            builder.Services.AddScoped<ITenantNameProvider, TenantNameProvider>();
 
-            // Add services to the container.
+            string authority = builder.Configuration.GetValue<string>("Authentication:Schemes:Bearer:Authority")!;
+            string audience = builder.Configuration.GetValue<string>("Authentication:Schemes:Bearer:Audience")!;
+            bool requireHttpsMetadata = builder.Configuration.GetValue<bool>("Authentication:Schemes:Bearer:RequireHttpsMetadata");
+            bool useSecurityTokenValidators = builder.Configuration.GetValue<bool>("Authentication:Schemes:Bearer:UseSecurityTokenValidators");
+
+            var mainSchemeHandler = JwtBearerDefaults.AuthenticationScheme;
+            builder.Services.AddAuthentication(
+                    options =>
+                    {
+                        // Setting the main scheme as the default is necessary for the challenge scheme to function correctly.
+                        options.DefaultAuthenticateScheme = mainSchemeHandler;
+                        options.DefaultChallengeScheme = mainSchemeHandler;
+                        options.DefaultScheme = mainSchemeHandler;
+                        options.DefaultForbidScheme = mainSchemeHandler;
+                    })
+                .AddMultiTenantJwtBearerToken(mainSchemeHandler, options =>
+            {
+                // Custom options for multi-tenant JWT validation.
+                options.Audience = audience;
+                options.Authority = authority;
+                options.RequireHttpsMetadata = requireHttpsMetadata;
+                options.UseSecurityTokenValidators = useSecurityTokenValidators;
+            });
 
             builder.Services.AddControllers();
-            // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 
             var app = builder.Build();
 
-            // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
 
+            app.UseMiddleware<TenantNameMiddleware>();
+            app.UseAuthentication();
             app.UseHttpsRedirection();
-
             app.UseAuthorization();
-
-
+            
             app.MapControllers();
-
+            
             app.Run();
         }
     }
