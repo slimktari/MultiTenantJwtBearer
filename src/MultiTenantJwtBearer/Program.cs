@@ -4,6 +4,7 @@ using MultiTenantJwtBearer.Extensions;
 using MultiTenantJwtBearer.Middleware;
 using MultiTenantJwtBearer.MultiTenancy.TenantName;
 using MultiTenantJwtBearer.Services;
+using Scalar.AspNetCore;
 
 namespace MultiTenantJwtBearer
 {
@@ -13,6 +14,7 @@ namespace MultiTenantJwtBearer
         {
             var builder = WebApplication.CreateBuilder(args);
 
+            builder.Services.AddOpenApi();
             builder.Services.AddHttpContextAccessor();
             
             builder.Services.AddTransient<ITenantNameAccessor, TenantNameAccessor>();
@@ -44,7 +46,9 @@ namespace MultiTenantJwtBearer
             builder.Services.AddEndpointsApiExplorer();
 
             var app = builder.Build();
-            
+
+            app.MapOpenApi();
+            app.MapScalarApiReference();
             app.UseMiddleware<TenantNameMiddleware>();
             app.UseAuthentication();
             app.UseHttpsRedirection();
