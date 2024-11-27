@@ -1,6 +1,9 @@
-﻿namespace MultiTenantJwtBearer.MultiTenancy;
+﻿using MultiTenantJwtBearer.MultiTenancy.TenantName;
+using TeleworkingAssistant.WebApi.Identity;
 
-public class TenantNameMiddleware(RequestDelegate next)
+namespace MultiTenantJwtBearer.Middleware;
+
+public class TenantNameMiddleware(RequestDelegate next, ITenantNameAccessor tenantNameAccessor)
 {
     public async Task InvokeAsync(HttpContext context)
     {
@@ -16,8 +19,8 @@ public class TenantNameMiddleware(RequestDelegate next)
             // Validate the tenantName.
             if (tenantName.IsValidTenantName())
             {
-                // If valid, store it in HttpContext.Items.
-                context.Items[HttpContextConstants.TenantNameKey] = tenantName;
+                // If valid, set the tenantName in the TenantNameAccessor.
+                tenantNameAccessor.SetTenantName(tenantName);
             }
             else
             {

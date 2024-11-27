@@ -1,6 +1,9 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using MultiTenantJwtBearer.Contracts;
-using MultiTenantJwtBearer.MultiTenancy;
+using MultiTenantJwtBearer.Extensions;
+using MultiTenantJwtBearer.Middleware;
+using MultiTenantJwtBearer.MultiTenancy.TenantName;
+using MultiTenantJwtBearer.Services;
 
 namespace MultiTenantJwtBearer
 {
@@ -9,10 +12,13 @@ namespace MultiTenantJwtBearer
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
-            builder.Services.AddScoped<ITenantNameProvider, TenantNameProvider>();
 
-            string authority = builder.Configuration.GetValue<string>("Authentication:Schemes:Bearer:Authority")!;
-            string audience = builder.Configuration.GetValue<string>("Authentication:Schemes:Bearer:Audience")!;
+            builder.Services.AddHttpContextAccessor();
+            
+            builder.Services.AddTransient<ITenantNameAccessor, TenantNameAccessor>();
+            builder.Services.AddScoped<ITenantNameProvider, TenantNameProvider>();
+            builder.Services.AddScoped<ITenantJwtBearerConfigurationService, TenantJwtBearerConfigurationService>();
+
             bool requireHttpsMetadata = builder.Configuration.GetValue<bool>("Authentication:Schemes:Bearer:RequireHttpsMetadata");
             bool useSecurityTokenValidators = builder.Configuration.GetValue<bool>("Authentication:Schemes:Bearer:UseSecurityTokenValidators");
 
@@ -27,11 +33,9 @@ namespace MultiTenantJwtBearer
                         options.DefaultScheme = mainSchemeHandler;
                         options.DefaultForbidScheme = mainSchemeHandler;
                     })
-                .AddMultiTenantJwtBearerToken(mainSchemeHandler, options =>
-                {
-                    // Custom options for multi-tenant JWT validation.
-                    options.Audience = audience;
-                    options.Authority = authority;
+                .AddMultiTenantJwtBearer(mainSchemeHandler, options =>
+                {   
+                    // Setting the common options for all tenants.
                     options.RequireHttpsMetadata = requireHttpsMetadata;
                     options.UseSecurityTokenValidators = useSecurityTokenValidators;
                 });

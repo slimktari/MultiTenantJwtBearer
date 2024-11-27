@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Options;
 using MultiTenantJwtBearer.Contracts;
 
-namespace MultiTenantJwtBearer.MultiTenancy
+namespace MultiTenantJwtBearer.MultiTenancy.Handlers
 {
     /// <summary>
     /// A custom JwtBearerHandler that supports tenant-specific configurations.
@@ -16,7 +16,9 @@ namespace MultiTenantJwtBearer.MultiTenancy
         IEnumerable<IPostConfigureOptions<JwtBearerOptions>> postConfigures,
         IOptionsMonitorCache<JwtBearerOptions> cache,
         IAuthenticationSchemeProvider schemes,
-        ITenantNameProvider tenantNameProvider)
+        ITenantNameProvider tenantNameProvider,
+        ITenantJwtBearerConfigurationService tenantConfigurationService
+        )
         : JwtBearerHandler(options, logger, encoder)
     {
         /// <summary>
@@ -24,13 +26,14 @@ namespace MultiTenantJwtBearer.MultiTenancy
         /// </summary>
         protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
         {
-            var tenantName = tenantNameProvider.GetCurrentTenantName();
+            var tenantName = tenantNameProvider.GetTenantName();
             if (string.IsNullOrEmpty(tenantName))
             {
                 return AuthenticateResult.Fail("The tenant information is not valid or missing.");
             }
             try
             {
+                // Ensures the tenant authentication scheme and options are available in IOptionsMonitorCache or creates them if necessary.
                 EnsureTenantOptions(tenantName);
                 await EnsureTenantScheme(tenantName);
                 return await Context.AuthenticateAsync(tenantName);
@@ -61,13 +64,16 @@ namespace MultiTenantJwtBearer.MultiTenancy
         /// </summary>
         private JwtBearerOptions InitTenantOptions(string tenantName)
         {
+            var tenantConfiguration = tenantConfigurationService.GetJwtBearerOptions(tenantName);
             return new JwtBearerOptions
             {
-                Audience = Options.Audience,
-                Authority = $"{Options.Authority}/{tenantName}",
-                MetadataAddress = $"{Options.Authority}/{tenantName}/.well-known/openid-configuration",
-                ClaimsIssuer = Options.ClaimsIssuer,
+                // Set specific configuration.
+                Audience = tenantConfiguration.Audience,
+                Authority = tenantConfiguration.Authority,
+                MetadataAddress = tenantConfiguration.MetadataAddress,
+                ClaimsIssuer = tenantConfiguration.ClaimsIssuer,
 
+                // Set common configuration. Depends on your needs, you can move options to ITenantJwtBearerConfigurationService.
                 Events = Options.Events,
                 EventsType = Options.EventsType,
 

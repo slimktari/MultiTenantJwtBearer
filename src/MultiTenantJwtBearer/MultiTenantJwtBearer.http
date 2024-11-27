@@ -1,6 +1,0 @@
-@MultiTenantJwtBearer_HostAddress = http://localhost:5062
-
-GET {{MultiTenantJwtBearer_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###

@@ -1,4 +1,4 @@
-﻿namespace MultiTenantJwtBearer.MultiTenancy
+﻿namespace MultiTenantJwtBearer.Middleware
 {
     public static class HttpContextConstants
     {

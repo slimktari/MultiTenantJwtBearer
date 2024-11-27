@@ -2,6 +2,6 @@
 {
     public interface ITenantNameProvider
     {
-        string GetCurrentTenantName();
+        string GetTenantName();
     }
 }

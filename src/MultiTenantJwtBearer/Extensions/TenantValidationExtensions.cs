@@ -1,6 +1,6 @@
 ﻿using System.Text.RegularExpressions;
 
-namespace MultiTenantJwtBearer.MultiTenancy
+namespace TeleworkingAssistant.WebApi.Identity
 {
     public static partial class TenantValidationExtensions
     {
@@ -11,7 +11,7 @@ namespace MultiTenantJwtBearer.MultiTenancy
         [GeneratedRegex("^[a-zA-Z][a-zA-Z0-9-]*$")]
         private static partial Regex TenantNamePattern();
 
-        public static bool IsValidTenantName(this string tenantName)
+        public static bool IsValidTenantName(this string? tenantName)
         {
             return !string.IsNullOrWhiteSpace(tenantName) &&
                    tenantName.Length >= 3 &&
