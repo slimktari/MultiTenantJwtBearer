@@ -4,6 +4,9 @@
 
 `MultiTenantJwtBearer` is a dynamic extension for ASP.NET Core applications that simplifies JWT-based multi-tenant authentication. It allows you to authenticate requests in multi-tenant environments without preloading all tenant configurations or restarting the application when new tenants are added.
 
+For a deeper dive into the motivations behind this library and detailed explanations of the code, 
+check out the [article](https://slimktari.com/dynamic-multi-tenant-authentication-in-net-with-jwtbearer-6bd622b62db3?sk=cb64a49db3e34202499b1b808d8f9f32).
+
 ## Key Features
 
 - **Multi-Tenant JWT Validation:** Streamlines JWT token validation across multiple tenants, identified by URL, in ASP.NET Core APIs.
